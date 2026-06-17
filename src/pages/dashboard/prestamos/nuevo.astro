@@ -1,0 +1,141 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { obtenerClientes } from '../../../services/clientes.service';
+
+const clientes = await obtenerClientes();
+---
+
+<DashboardLayout title="Nuevo Préstamo" subtitle="Registra un nuevo préstamo">
+  <div style="max-width:600px;">
+    <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:32px;">
+
+      <div id="error-msg" style="display:none; background:#fee2e2; border:1px solid #fecaca; color:#dc2626; padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:0.875rem;"></div>
+
+      <form id="form-prestamo" style="display:flex; flex-direction:column; gap:20px;">
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Cliente *</label>
+          <select name="cliente_id" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:white;">
+            <option value="">Seleccionar cliente...</option>
+            {clientes.map(c => (
+              <option value={c.id}>{c.nombre} {c.apellido} — {c.cedula}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Monto (RD$) *</label>
+            <input name="monto" type="number" min="1" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+          </div>
+          <div>
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Interés (%) *</label>
+            <input name="interes" type="number" min="0" step="0.1" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Cuotas *</label>
+            <input name="cuotas" type="number" min="1" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+          </div>
+          <div>
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Fecha inicio *</label>
+            <input name="fecha_inicio" type="date" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Fecha fin *</label>
+          <input name="fecha_fin" type="date" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Observaciones</label>
+          <textarea name="observaciones" rows={3} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; resize:vertical;"></textarea>
+        </div>
+
+        <!-- Preview cálculo -->
+        <div id="preview" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">
+          <p style="font-size:0.8125rem; font-weight:600; color:#16a34a; margin-bottom:8px;">Resumen del préstamo</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.875rem;">
+            <span style="color:#475569;">Monto total:</span><span id="prev-total" style="font-weight:600; color:#0f172a;"></span>
+            <span style="color:#475569;">Cuota aprox.:</span><span id="prev-cuota" style="font-weight:600; color:#0f172a;"></span>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; padding-top:8px;">
+          <button type="submit" id="btn-submit" style="flex:1; background:#16a34a; color:white; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
+            Guardar Préstamo
+          </button>
+          <a href="/dashboard/prestamos" style="flex:1; border:1px solid #e2e8f0; color:#475569; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; text-align:center; text-decoration:none;">
+            Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+ <script>
+    const form = document.getElementById('form-prestamo') as HTMLFormElement;
+    const errorMsg = document.getElementById('error-msg') as HTMLElement;
+    const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
+    const preview = document.getElementById('preview') as HTMLElement;
+    const prevTotal = document.getElementById('prev-total') as HTMLElement;
+    const prevCuota = document.getElementById('prev-cuota') as HTMLElement;
+
+    // Preview en tiempo real
+    function calcular() {
+      const monto = parseFloat((form.querySelector('[name=monto]') as HTMLInputElement).value);
+      const interes = parseFloat((form.querySelector('[name=interes]') as HTMLInputElement).value);
+      const cuotas = parseInt((form.querySelector('[name=cuotas]') as HTMLInputElement).value);
+      if (monto && interes >= 0 && cuotas) {
+        const total = monto * (1 + interes / 100);
+        const cuota = total / cuotas;
+        prevTotal.textContent = `RD$ ${total.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`;
+        prevCuota.textContent = `RD$ ${cuota.toLocaleString('es-DO', { minimumFractionDigits: 2 })}`;
+        preview.style.display = 'block';
+      }
+    }
+
+    form.querySelectorAll('[name=monto],[name=interes],[name=cuotas]').forEach(el => {
+      el.addEventListener('input', calcular);
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btnSubmit.textContent = 'Guardando...';
+      btnSubmit.style.opacity = '0.7';
+      errorMsg.style.display = 'none';
+
+      const campos = ['cliente_id', 'monto', 'interes', 'cuotas', 'fecha_inicio', 'fecha_fin', 'observaciones'];
+      const data: Record<string, any> = {};
+
+      campos.forEach(k => {
+        const el = form.querySelector(`[name=${k}]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        if (!el || !el.value) return;
+        data[k] = ['monto', 'interes', 'cuotas'].includes(k) ? Number(el.value) : el.value;
+      });
+
+      const res = await fetch('/api/prestamos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        window.location.href = '/dashboard/prestamos';
+      } else {
+        let msg = 'Error al guardar';
+        try {
+          const json = await res.json();
+          msg = json.error || msg;
+        } catch {}
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+        btnSubmit.textContent = 'Guardar Préstamo';
+        btnSubmit.style.opacity = '1';
+      }
+    });
+  </script>
+</DashboardLayout>

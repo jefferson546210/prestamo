@@ -1,0 +1,170 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { obtenerPrestamos } from '../../../services/prestamos.service';
+
+const prestamos = await obtenerPrestamos();
+const prestamosActivos = prestamos.filter((p: any) => p.estado === 'activo');
+---
+
+<DashboardLayout title="Registrar Pago" subtitle="Registra un pago de préstamo">
+  <div style="max-width:560px;">
+    <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:32px;">
+
+      <div id="error-msg" style="display:none; background:#fee2e2; border:1px solid #fecaca; color:#dc2626; padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:0.875rem;"></div>
+
+      <form id="form-pago" style="display:flex; flex-direction:column; gap:20px;">
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Préstamo *</label>
+          <select name="prestamo_id" required id="select-prestamo" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:white;">
+            <option value="">Seleccionar préstamo...</option>
+            {prestamosActivos.map((p: any) => (
+              <option value={p.id} data-saldo={p.saldo_restante}>
+                {p.clientes ? `${p.clientes.nombre} ${p.clientes.apellido}` : p.id.slice(0,8)} — Saldo: RD$ {p.saldo_restante?.toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Info saldo -->
+        <div id="saldo-info" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:14px;">
+          <p style="font-size:0.8125rem; color:#475569;">Saldo pendiente:</p>
+          <p id="saldo-valor" style="font-size:1.25rem; font-weight:700; color:#16a34a;"></p>
+        </div>
+
+        <div id="cuota-selector" style="display:none;">
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Cuota a pagar</label>
+          <select name="cuota_id" id="select-cuota" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:white;">
+            <option value="">Seleccionar cuota...</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Monto Pagado (RD$) *</label>
+          <input name="monto_pagado" type="number" min="1" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Método de pago *</label>
+          <select name="metodo_pago" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:white;">
+            <option value="">Seleccionar...</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Fecha de pago *</label>
+          <input name="fecha_pago" type="date" required style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+        </div>
+
+        <div>
+          <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Observación</label>
+          <textarea name="observacion" rows={2} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:12px; padding-top:8px;">
+          <button type="submit" id="btn-submit" style="flex:1; background:#16a34a; color:white; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
+            Registrar Pago
+          </button>
+          <a href="/dashboard/pagos" style="flex:1; border:1px solid #e2e8f0; color:#475569; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; text-align:center; text-decoration:none;">
+            Cancelar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('form-pago') as HTMLFormElement;
+    const errorMsg = document.getElementById('error-msg') as HTMLElement;
+    const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
+    const selectPrestamo = document.getElementById('select-prestamo') as HTMLSelectElement;
+    const saldoInfo = document.getElementById('saldo-info') as HTMLElement;
+    const saldoValor = document.getElementById('saldo-valor') as HTMLElement;
+    const cuotaSelector = document.getElementById('cuota-selector') as HTMLElement;
+    const selectCuota = document.getElementById('select-cuota') as HTMLSelectElement;
+    const montoInput = form.querySelector('[name=monto_pagado]') as HTMLInputElement;
+
+    let cuotasCache: Record<string, any[]> = {};
+
+    // Fecha de hoy por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    (form.querySelector('[name=fecha_pago]') as HTMLInputElement).value = hoy;
+
+    selectPrestamo.addEventListener('change', async () => {
+      const opt = selectPrestamo.selectedOptions[0];
+      const saldo = opt?.dataset.saldo;
+      if (saldo) {
+        saldoValor.textContent = `RD$ ${parseFloat(saldo).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`;
+        saldoInfo.style.display = 'block';
+      } else {
+        saldoInfo.style.display = 'none';
+        cuotaSelector.style.display = 'none';
+        return;
+      }
+
+      // Fetch cuotas pendientes
+      const prestamoId = (opt as HTMLOptionElement).value;
+      if (!prestamoId) { cuotaSelector.style.display = 'none'; return; }
+
+      try {
+        const res = await fetch(`/api/cuotas?prestamo_id=${prestamoId}`);
+        if (!res.ok) return;
+        const cuotas = await res.json();
+        cuotasCache[prestamoId] = cuotas;
+        const pendientes = cuotas.filter((c: any) => c.estado_actual === 'pendiente');
+
+        selectCuota.innerHTML = '<option value="">Seleccionar cuota...</option>';
+        pendientes.forEach((c: any) => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `Cuota #${c.numero_cuota} — RD$ ${c.monto.toLocaleString()} (vence ${new Date(c.fecha_vencimiento).toLocaleDateString('es-DO')})`;
+          opt.dataset.monto = c.monto;
+          selectCuota.appendChild(opt);
+        });
+
+        cuotaSelector.style.display = pendientes.length > 0 ? 'block' : 'none';
+      } catch { cuotaSelector.style.display = 'none'; }
+    });
+
+    selectCuota.addEventListener('change', () => {
+      const opt = selectCuota.selectedOptions[0];
+      const monto = opt?.dataset.monto;
+      if (monto) {
+        montoInput.value = monto;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btnSubmit.textContent = 'Registrando...';
+      btnSubmit.style.opacity = '0.7';
+      errorMsg.style.display = 'none';
+
+      const fd = new FormData(form);
+      const data: Record<string, any> = {};
+      fd.forEach((v, k) => {
+        if (v) data[k] = k === 'monto_pagado' ? Number(v) : v.toString();
+      });
+      if (!data.cuota_id) delete data.cuota_id;
+
+      const res = await fetch('/api/pagos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        window.location.href = '/dashboard/pagos';
+      } else {
+        const json = await res.json();
+        errorMsg.textContent = json.error || 'Error al registrar';
+        errorMsg.style.display = 'block';
+        btnSubmit.textContent = 'Registrar Pago';
+        btnSubmit.style.opacity = '1';
+      }
+    });
+  </script>
+</DashboardLayout>

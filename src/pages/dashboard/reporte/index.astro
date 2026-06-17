@@ -1,0 +1,195 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { supabase } from '../../../db/supabase';
+
+// Datos reales
+const { data: prestamos } = await supabase.from('prestamos').select('*, clientes(nombre, apellido)');
+const { data: pagos } = await supabase.from('pagos').select('*').order('fecha_pago', { ascending: false });
+const { data: clientes } = await supabase.from('clientes').select('*');
+const { data: config } = await supabase.from('configuracion').select('nombre_empresa').single();
+
+// Cálculos
+const totalPrestado = prestamos?.reduce((s, p) => s + p.monto, 0) ?? 0;
+const totalCobrado = pagos?.reduce((s, p) => s + p.monto_pagado, 0) ?? 0;
+const saldoPendiente = prestamos?.reduce((s, p) => s + p.saldo_restante, 0) ?? 0;
+const prestamosActivos = prestamos?.filter(p => p.estado === 'activo').length ?? 0;
+const prestamosVencidos = prestamos?.filter(p => p.estado === 'vencido').length ?? 0;
+const prestamosPagados = prestamos?.filter(p => p.estado === 'pagado').length ?? 0;
+const totalClientes = clientes?.length ?? 0;
+const tasaRecuperacion = totalPrestado > 0 ? ((totalCobrado / totalPrestado) * 100).toFixed(1) : '0';
+const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos?.length ?? 1)) * 100).toFixed(1) : '0';
+---
+
+<DashboardLayout title="Reportes" subtitle="Resumen financiero del sistema">
+  <div style="display:flex; flex-direction:column; gap:24px;">
+
+    <div style="display:flex; justify-content:flex-end;">
+      <button id="btn-pdf" style="display:flex; align-items:center; gap:8px; background:#2563eb; color:white; padding:10px 20px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
+        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Descargar PDF
+      </button>
+    </div>
+
+    <!-- KPIs -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+      {[
+        { label: 'Total Prestado',     valor: `RD$ ${totalPrestado.toLocaleString()}`,     color: '#2563eb', bg: '#dbeafe' },
+        { label: 'Total Cobrado',      valor: `RD$ ${totalCobrado.toLocaleString()}`,      color: '#16a34a', bg: '#dcfce7' },
+        { label: 'Saldo Pendiente',    valor: `RD$ ${saldoPendiente.toLocaleString()}`,    color: '#dc2626', bg: '#fee2e2' },
+        { label: 'Tasa Recuperación',  valor: `${tasaRecuperacion}%`,                      color: '#9333ea', bg: '#f3e8ff' },
+      ].map(k => (
+        <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+          <p style="font-size:0.75rem; font-weight:600; color:#94a3b8; margin-bottom:8px;">{k.label}</p>
+          <p style={`font-size:1.5rem; font-weight:800; color:${k.color};`}>{k.valor}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Segunda fila KPIs -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+      {[
+        { label: 'Préstamos Activos',  valor: prestamosActivos,  color: '#2563eb' },
+        { label: 'Préstamos Pagados',  valor: prestamosPagados,  color: '#16a34a' },
+        { label: 'Préstamos Vencidos', valor: prestamosVencidos, color: '#dc2626' },
+        { label: 'Total Clientes',     valor: totalClientes,     color: '#9333ea' },
+      ].map(k => (
+        <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+          <p style="font-size:0.75rem; font-weight:600; color:#94a3b8; margin-bottom:8px;">{k.label}</p>
+          <p style={`font-size:2rem; font-weight:800; color:${k.color};`}>{k.valor}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- Fila inferior -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+      <!-- Estado de cartera -->
+      <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+        <h2 style="font-size:0.9375rem; font-weight:700; color:#0f172a; margin-bottom:20px;">Estado de Cartera</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          {[
+            { label: 'Activos',  count: prestamosActivos,  total: prestamos?.length ?? 1, color: '#2563eb' },
+            { label: 'Pagados',  count: prestamosPagados,  total: prestamos?.length ?? 1, color: '#16a34a' },
+            { label: 'Vencidos', count: prestamosVencidos, total: prestamos?.length ?? 1, color: '#dc2626' },
+          ].map(item => {
+            const pct = prestamos?.length ? Math.round((item.count / prestamos.length) * 100) : 0;
+            return (
+              <div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style={`width:10px; height:10px; border-radius:50%; background:${item.color}; display:inline-block;`}></span>
+                    <span style="font-size:0.875rem; color:#475569;">{item.label}</span>
+                  </div>
+                  <span style="font-size:0.875rem; font-weight:700; color:#0f172a;">{pct}% ({item.count})</span>
+                </div>
+                <div style="background:#f1f5f9; border-radius:999px; height:6px;">
+                  <div style={`height:6px; border-radius:999px; background:${item.color}; width:${pct}%;`}></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #f1f5f9; display:flex; gap:16px;">
+          <div>
+            <p style="font-size:0.75rem; color:#94a3b8;">Tasa de mora</p>
+            <p style="font-size:1.125rem; font-weight:700; color:#dc2626;">{tasaMora}%</p>
+          </div>
+          <div>
+            <p style="font-size:0.75rem; color:#94a3b8;">Tasa recuperación</p>
+            <p style="font-size:1.125rem; font-weight:700; color:#16a34a;">{tasaRecuperacion}%</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimos pagos -->
+      <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+        <h2 style="font-size:0.9375rem; font-weight:700; color:#0f172a; margin-bottom:20px;">Últimos Pagos</h2>
+        <div style="display:flex; flex-direction:column; gap:2px;">
+          {pagos?.slice(0, 8).map(p => (
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
+              <div>
+                <p style="font-size:0.8125rem; font-weight:600; color:#0f172a;">{new Date(p.fecha_pago).toLocaleDateString('es-DO')}</p>
+                <p style="font-size:0.75rem; color:#94a3b8;">{p.metodo_pago}</p>
+              </div>
+              <span style="font-size:0.875rem; font-weight:700; color:#16a34a;">RD$ {p.monto_pagado.toLocaleString()}</span>
+            </div>
+          ))}
+          {(!pagos || pagos.length === 0) && (
+            <p style="text-align:center; color:#94a3b8; font-size:0.875rem; padding:24px 0;">No hay pagos registrados</p>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla préstamos vencidos -->
+    {prestamosVencidos > 0 && (
+      <div style="background:white; border-radius:16px; border:1px solid #fee2e2; padding:24px;">
+        <h2 style="font-size:0.9375rem; font-weight:700; color:#dc2626; margin-bottom:16px;">⚠ Préstamos Vencidos</h2>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#fff5f5; border-bottom:1px solid #fee2e2;">
+              <th style="padding:10px 16px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Cliente</th>
+              <th style="padding:10px 16px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Monto</th>
+              <th style="padding:10px 16px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Saldo</th>
+              <th style="padding:10px 16px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Venció</th>
+            </tr>
+          </thead>
+          <tbody>
+            {prestamos?.filter(p => p.estado === 'vencido').map(p => (
+              <tr style="border-bottom:1px solid #fff5f5;">
+                <td style="padding:12px 16px; font-size:0.875rem; font-weight:600; color:#0f172a;">
+                  {p.clientes ? `${p.clientes.nombre} ${p.clientes.apellido}` : '—'}
+                </td>
+                <td style="padding:12px 16px; font-size:0.875rem; color:#475569;">RD$ {p.monto.toLocaleString()}</td>
+                <td style="padding:12px 16px; font-size:0.875rem; font-weight:700; color:#dc2626;">RD$ {p.saldo_restante.toLocaleString()}</td>
+                <td style="padding:12px 16px; font-size:0.875rem; color:#dc2626;">
+                  {p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString('es-DO') : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js" data-astro-rerun></script>
+  <script data-astro-rerun>
+    document.getElementById('btn-pdf')?.addEventListener('click', () => {
+      const btn = document.getElementById('btn-pdf') as HTMLElement;
+      btn.textContent = 'Generando...';
+      btn.style.opacity = '0.7';
+
+      const empresa = 'Sistema de Préstamos';
+      const fecha = new Date().toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' });
+
+      const content = document.querySelector('[style*="flex-direction:column; gap:24px;"] > div:last-child') as HTMLElement;
+      if (!content) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.padding = '32px';
+      wrapper.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      wrapper.style.color = '#0f172a';
+      wrapper.innerHTML = `
+        <div style="text-align:center; margin-bottom:32px; border-bottom:2px solid #2563eb; padding-bottom:16px;">
+          <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">${empresa}</h1>
+          <p style="font-size:13px; color:#64748b; margin:4px 0 0;">Reporte Financiero — ${fecha}</p>
+        </div>
+      `;
+      wrapper.appendChild(content.cloneNode(true));
+
+      html2pdf().set({
+        margin: [10, 10, 10, 10],
+        filename: 'reporte-financiero.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      }).from(wrapper).save().then(() => {
+        btn.textContent = 'Descargar PDF';
+        btn.style.opacity = '1';
+      });
+    });
+  </script>
+</DashboardLayout>

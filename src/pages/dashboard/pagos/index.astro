@@ -1,0 +1,115 @@
+---
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { obtenerPagos } from '../../../services/pagos.service';
+
+const pagos = await obtenerPagos();
+
+const metodoStyle: Record<string, string> = {
+  efectivo:      'background:#dcfce7; color:#16a34a;',
+  transferencia: 'background:#dbeafe; color:#2563eb;',
+  tarjeta:       'background:#f3e8ff; color:#9333ea;',
+};
+---
+
+<DashboardLayout title="Pagos" subtitle="Historial de pagos registrados">
+  <div style="display:flex; flex-direction:column; gap:24px;">
+
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <span style="background:#f3e8ff; color:#9333ea; padding:4px 12px; border-radius:999px; font-size:0.75rem; font-weight:600;">
+        {pagos.length} pagos
+      </span>
+      <div style="display:flex; gap:8px;">
+        <button id="btnExportPagos" style="display:flex; align-items:center; gap:6px; background:white; color:#475569; padding:10px 16px; border-radius:10px; font-size:0.875rem; font-weight:600; border:1px solid #e2e8f0; cursor:pointer;">
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Exportar
+        </button>
+        <a href="/dashboard/pagos/nuevo" style="display:flex; align-items:center; gap:8px; background:#16a34a; color:white; padding:10px 20px; border-radius:10px; font-size:0.875rem; font-weight:600; text-decoration:none;">
+          + Registrar Pago
+        </a>
+      </div>
+    </div>
+
+    <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:1px solid #f1f5f9;">
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Cliente</th>
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Monto Pagado</th>
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Método</th>
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Fecha</th>
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Observación</th>
+              <th style="padding:12px 20px; text-align:left; font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pagos.length === 0 ? (
+              <tr>
+                <td colspan={6} style="padding:48px; text-align:center; color:#94a3b8;">No hay pagos registrados</td>
+              </tr>
+            ) : pagos.map((p: any) => (
+              <tr style="border-bottom:1px solid #f8fafc;" class="fila-pago">
+                <td style="padding:16px 20px;">
+                  <div style="font-weight:600; font-size:0.875rem; color:#0f172a;">
+                    {p.prestamos?.clientes ? `${p.prestamos.clientes.nombre} ${p.prestamos.clientes.apellido}` : '—'}
+                  </div>
+                  <div style="font-size:0.75rem; color:#94a3b8;">Préstamo RD$ {p.prestamos?.monto?.toLocaleString()}</div>
+                </td>
+                <td style="padding:16px 20px; font-size:0.875rem; font-weight:700; color:#16a34a;">
+                  RD$ {p.monto_pagado.toLocaleString()}
+                </td>
+                <td style="padding:16px 20px;">
+                  <span style={`padding:4px 10px; border-radius:999px; font-size:0.75rem; font-weight:600; ${metodoStyle[p.metodo_pago] ?? ''}`}>
+                    {p.metodo_pago}
+                  </span>
+                </td>
+                <td style="padding:16px 20px; font-size:0.875rem; color:#475569;">
+                  {new Date(p.fecha_pago).toLocaleDateString('es-DO')}
+                </td>
+                <td style="padding:16px 20px; font-size:0.875rem; color:#475569;">{p.observacion ?? '—'}</td>
+                <td style="padding:16px 20px;">
+                  <button data-id={p.id} class="btn-eliminar-pago" style="font-size:0.8125rem; color:#dc2626; font-weight:500; background:none; border:none; cursor:pointer; padding:0;">Eliminar</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.btn-eliminar-pago').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = (btn as HTMLElement).dataset.id;
+        const ok = await window.confirmAction('Eliminar pago', '¿Estás seguro de eliminar este pago? Esta acción no se puede deshacer.');
+        if (!ok) return;
+        const res = await fetch(`/api/pagos/${id}`, { method: 'DELETE' });
+        if (res.ok) { window.toast('Pago eliminado correctamente'); location.reload(); }
+        else window.toast('Error al eliminar el pago', 'error');
+      });
+    });
+
+    document.querySelectorAll('.fila-pago').forEach(fila => {
+      fila.addEventListener('mouseenter', () => (fila as HTMLElement).style.background = '#f8fafc');
+      fila.addEventListener('mouseleave', () => (fila as HTMLElement).style.background = 'transparent');
+    });
+
+    document.getElementById('btnExportPagos')?.addEventListener('click', () => {
+      const rows = Array.from(document.querySelectorAll('.fila-pago'));
+      const csv = [['Cliente','Monto Pagado','Método','Fecha','Observación'].join(',')];
+      rows.forEach(r => {
+        const cells = r.querySelectorAll('td');
+        const cliente = cells[0]?.querySelector('div')?.textContent?.trim() || '';
+        const monto = cells[1]?.textContent?.trim() || '';
+        const metodo = cells[2]?.querySelector('span')?.textContent?.trim() || '';
+        const fecha = cells[3]?.textContent?.trim() || '';
+        const obs = cells[4]?.textContent?.trim() || '';
+        csv.push(`"${cliente}","${monto}","${metodo}","${fecha}","${obs}"`);
+      });
+      const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pagos.csv'; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+  </script>
+</DashboardLayout>
