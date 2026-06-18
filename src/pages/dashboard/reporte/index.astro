@@ -107,7 +107,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
         <h2 style="font-size:0.9375rem; font-weight:700; color:var(--text-primary); margin-bottom:20px;">Últimos Pagos</h2>
         <div style="display:flex; flex-direction:column; gap:2px;">
           {pagos?.slice(0, 8).map(p => (
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
               <div>
                 <p style="font-size:0.8125rem; font-weight:600; color:var(--text-primary);">{new Date(p.fecha_pago).toLocaleDateString('es-DO')}</p>
                 <p style="font-size:0.75rem; color:#94a3b8;">{p.metodo_pago}</p>

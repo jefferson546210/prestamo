@@ -44,7 +44,7 @@ const rolStyle: Record<string, string> = {
               <td colspan={5} style="padding:48px; text-align:center; color:#94a3b8;">No hay usuarios registrados</td>
             </tr>
           ) : usuarios.map((u) => (
-            <tr style="border-bottom:1px solid #f8fafc;" class="fila-usuario">
+            <tr style="border-bottom:1px solid var(--border);" class="fila-usuario">
               <td style="padding:16px 20px;">
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#dbeafe; display:flex; align-items:center; justify-content:center; font-weight:700; color:#2563eb; font-size:0.875rem;">
@@ -180,7 +180,7 @@ const rolStyle: Record<string, string> = {
     });
 
     document.querySelectorAll('.fila-usuario').forEach(fila => {
-      fila.addEventListener('mouseenter', () => (fila as HTMLElement).style.background = '#f8fafc');
+      fila.addEventListener('mouseenter', () => { (fila as HTMLElement).style.background = document.documentElement.classList.contains('dark') ? '#1e293b' : 'var(--border)' });
       fila.addEventListener('mouseleave', () => (fila as HTMLElement).style.background = 'transparent');
     });
   </script>

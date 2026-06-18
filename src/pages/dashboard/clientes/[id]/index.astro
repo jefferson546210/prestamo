@@ -83,7 +83,7 @@ const estadoStyle: Record<string, string> = {
               </thead>
               <tbody>
                 {prestamos.map((p: Prestamo) => (
-                  <tr style="border-bottom:1px solid #f8fafc;">
+                  <tr style="border-bottom:1px solid var(--border);">
                     <td style="padding:14px 20px; font-size:13px; color:var(--text-muted); font-family:monospace;">{p.id.slice(0, 8)}</td>
                     <td style="padding:14px 20px; font-size:14px; font-weight:700; color:var(--text-primary);">RD$ {p.monto.toLocaleString()}</td>
                     <td style="padding:14px 20px; font-size:14px; font-weight:600; color:#dc2626;">RD$ {p.saldo_restante.toLocaleString()}</td>

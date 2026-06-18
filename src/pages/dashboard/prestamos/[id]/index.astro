@@ -188,7 +188,7 @@ const estadoStyle: Record<string, string> = {
               </thead>
               <tbody>
                 {pagos.map(p => (
-                  <tr style="border-bottom:1px solid #f8fafc;">
+                  <tr style="border-bottom:1px solid var(--border);">
                     <td style="padding:14px 20px; font-size:0.875rem; color:var(--text-secondary);">{new Date(p.fecha_pago).toLocaleDateString('es-DO')}</td>
                     <td style="padding:14px 20px; font-size:0.875rem; font-weight:700; color:#16a34a;">RD$ {p.monto_pagado.toLocaleString()}</td>
                     <td style="padding:14px 20px;">

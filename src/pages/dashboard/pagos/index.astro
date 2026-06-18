@@ -48,7 +48,7 @@ const metodoStyle: Record<string, string> = {
                 <td colspan={6} style="padding:48px; text-align:center; color:#94a3b8;">No hay pagos registrados</td>
               </tr>
             ) : pagos.map((p: any) => (
-              <tr style="border-bottom:1px solid #f8fafc;" class="fila-pago">
+              <tr style="border-bottom:1px solid var(--border);" class="fila-pago">
                 <td style="padding:16px 20px;">
                   <div style="font-weight:600; font-size:0.875rem; color:var(--text-primary);">
                     {p.prestamos?.clientes ? `${p.prestamos.clientes.nombre} ${p.prestamos.clientes.apellido}` : '—'}
@@ -91,7 +91,7 @@ const metodoStyle: Record<string, string> = {
     });
 
     document.querySelectorAll('.fila-pago').forEach(fila => {
-      fila.addEventListener('mouseenter', () => (fila as HTMLElement).style.background = '#f8fafc');
+      fila.addEventListener('mouseenter', () => { (fila as HTMLElement).style.background = document.documentElement.classList.contains('dark') ? '#1e293b' : 'var(--border)' });
       fila.addEventListener('mouseleave', () => (fila as HTMLElement).style.background = 'transparent');
     });
 

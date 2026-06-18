@@ -24,3 +24,8 @@ pnpm-debug.log*
 .idea/
 
 .vercel
+
+# dev server logs
+dev.log
+dev-err.log
+dev-output.txt
