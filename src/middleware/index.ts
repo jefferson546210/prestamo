@@ -9,6 +9,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   '/api/clientes': ['admin', 'gestor'],
   '/api/prestamos': ['admin', 'gestor'],
   '/api/pagos': ['admin', 'gestor', 'cajero'],
+  '/api/reporte': ['admin', 'gestor'],
 };
 
 function getRequiredRole(path: string): string | null {
