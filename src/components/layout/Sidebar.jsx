@@ -106,14 +106,12 @@ export default function Sidebar() {
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {[
           { href: '/dashboard/configuracion', label: 'Configuración', icon: <svg style={{width:16,height:16}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg> },
-          { href: '#', label: 'Ayuda', icon: <svg style={{width:16,height:16}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> },
         ].map(item => (
-          
-            <a key={item.href}
+          <a key={item.href}
             href={item.href}
             style={linkInactive}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f0fdf4'; e.currentTarget.style.color = '#16a34a'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#475569'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = darkMode ? '#1a3a2a' : '#f0fdf4'; e.currentTarget.style.color = '#16a34a'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = darkMode ? '#94a3b8' : '#475569'; }}
           >
             {item.icon}
             {item.label}
@@ -146,7 +144,7 @@ export default function Sidebar() {
         <p style={{ fontSize: '0.75rem', opacity: 0.85, marginTop: '4px' }}>Gestiona clientes, préstamos y pagos desde un solo lugar.</p>
         
           <a href="/dashboard/clientes/nuevo"
-          style={{ display: 'block', marginTop: '14px', background: 'white', color: '#16a34a', fontSize: '0.875rem', fontWeight: 700, borderRadius: '10px', padding: '9px', textAlign: 'center', textDecoration: 'none' }}
+          style={{ display: 'block', marginTop: '14px', background: 'var(--bg-card)', color: '#16a34a', fontSize: '0.875rem', fontWeight: 700, borderRadius: '10px', padding: '9px', textAlign: 'center', textDecoration: 'none' }}
         >
           Nuevo Cliente
         </a>

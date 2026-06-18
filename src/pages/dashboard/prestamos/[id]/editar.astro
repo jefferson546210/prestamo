@@ -18,14 +18,14 @@ const clientes = await obtenerClientes();
 
 <DashboardLayout title="Editar Préstamo" subtitle={prestamo ? `RD$ ${prestamo.monto.toLocaleString()}` : 'No encontrado'}>
   {prestamo ? (
-    <div style="max-width:600px;">
-      <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:32px;">
+    <div style="max-width:600px; margin:0 auto;">
+      <div style="background:var(--bg-card); border-radius:16px; border:1px solid var(--border); padding:32px;">
         <div id="error-msg" style="display:none; background:#fee2e2; border:1px solid #fecaca; color:#dc2626; padding:12px 16px; border-radius:10px; margin-bottom:20px; font-size:0.875rem;"></div>
 
         <form id="form-prestamo" style="display:flex; flex-direction:column; gap:20px;">
           <div>
-            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Cliente</label>
-            <select name="cliente_id" disabled style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:#f8fafc; color:#94a3b8;">
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Cliente</label>
+            <select name="cliente_id" disabled style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:var(--input-bg); color:var(--input-text); opacity:0.6;">
               <option value={prestamo.cliente_id} selected>
                 {prestamo.clientes?.nombre} {prestamo.clientes?.apellido}
               </option>
@@ -34,23 +34,23 @@ const clientes = await obtenerClientes();
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
             <div>
-              <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Monto (RD$) *</label>
-              <input name="monto" type="number" min="1" required value={prestamo.monto} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+              <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Monto (RD$) *</label>
+              <input name="monto" type="number" min="1" required value={prestamo.monto} style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:var(--input-bg); color:var(--input-text);" />
             </div>
             <div>
-              <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Interés (%) *</label>
-              <input name="interes" type="number" min="0" step="0.1" required value={prestamo.interes} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+              <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Interés (%) *</label>
+              <input name="interes" type="number" min="0" step="0.1" required value={prestamo.interes} style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:var(--input-bg); color:var(--input-text);" />
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
             <div>
-              <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Cuotas *</label>
-              <input name="cuotas" type="number" min="1" required value={prestamo.cuotas} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none;" />
+              <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Cuotas *</label>
+              <input name="cuotas" type="number" min="1" required value={prestamo.cuotas} style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:var(--input-bg); color:var(--input-text);" />
             </div>
             <div>
-              <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Estado</label>
-              <select name="estado" style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:white;">
+              <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Estado</label>
+              <select name="estado" style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; background:var(--input-bg); color:var(--input-text);">
                 <option value="activo" {prestamo.estado === 'activo' ? 'selected' : ''}>Activo</option>
                 <option value="pagado" {prestamo.estado === 'pagado' ? 'selected' : ''}>Pagado</option>
                 <option value="vencido" {prestamo.estado === 'vencido' ? 'selected' : ''}>Vencido</option>
@@ -59,16 +59,16 @@ const clientes = await obtenerClientes();
           </div>
 
           <div>
-            <label style="display:block; font-size:0.8125rem; font-weight:600; color:#374151; margin-bottom:6px;">Observaciones</label>
-            <textarea name="observaciones" rows={3} style="width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; resize:vertical;">{prestamo.observaciones ?? ''}</textarea>
+            <label style="display:block; font-size:0.8125rem; font-weight:600; color:var(--label-color); margin-bottom:6px;">Observaciones</label>
+            <textarea name="observaciones" rows={3} style="width:100%; border:1px solid var(--input-border); border-radius:10px; padding:10px 14px; font-size:0.875rem; outline:none; resize:vertical; background:var(--input-bg); color:var(--input-text);">{prestamo.observaciones ?? ''}</textarea>
           </div>
 
           <!-- Resumen -->
           <div id="preview" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">
             <p style="font-size:0.8125rem; font-weight:600; color:#16a34a; margin-bottom:8px;">Resumen del préstamo</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.875rem;">
-              <span style="color:#475569;">Monto total:</span><span id="prev-total" style="font-weight:600; color:#0f172a;">RD$ {(prestamo.monto_total).toLocaleString()}</span>
-              <span style="color:#475569;">Saldo restante:</span><span style="font-weight:600; color:#dc2626;">RD$ {prestamo.saldo_restante.toLocaleString()}</span>
+              <span style="color:var(--text-secondary);">Monto total:</span><span id="prev-total" style="font-weight:600; color:var(--text-primary);">RD$ {(prestamo.monto_total).toLocaleString()}</span>
+              <span style="color:var(--text-secondary);">Saldo restante:</span><span style="font-weight:600; color:#dc2626;">RD$ {prestamo.saldo_restante.toLocaleString()}</span>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ const clientes = await obtenerClientes();
             <button type="submit" id="btn-submit" style="flex:1; background:#16a34a; color:white; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
               Guardar Cambios
             </button>
-            <a href={`/dashboard/prestamos/${id}`} style="flex:1; border:1px solid #e2e8f0; color:#475569; padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; text-align:center; text-decoration:none;">
+            <a href={`/dashboard/prestamos/${id}`} style="flex:1; border:1px solid var(--border); color:var(--text-secondary); padding:12px; border-radius:10px; font-size:0.875rem; font-weight:600; text-align:center; text-decoration:none;">
               Cancelar
             </a>
           </div>

@@ -38,7 +38,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
         { label: 'Saldo Pendiente',    valor: `RD$ ${saldoPendiente.toLocaleString()}`,    color: '#dc2626', bg: '#fee2e2' },
         { label: 'Tasa Recuperación',  valor: `${tasaRecuperacion}%`,                      color: '#9333ea', bg: '#f3e8ff' },
       ].map(k => (
-        <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+        <div style="background:var(--bg-card); border-radius:16px; border:1px solid var(--border); padding:24px;">
           <p style="font-size:0.75rem; font-weight:600; color:#94a3b8; margin-bottom:8px;">{k.label}</p>
           <p style={`font-size:1.5rem; font-weight:800; color:${k.color};`}>{k.valor}</p>
         </div>
@@ -53,7 +53,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
         { label: 'Préstamos Vencidos', valor: prestamosVencidos, color: '#dc2626' },
         { label: 'Total Clientes',     valor: totalClientes,     color: '#9333ea' },
       ].map(k => (
-        <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
+        <div style="background:var(--bg-card); border-radius:16px; border:1px solid var(--border); padding:24px;">
           <p style="font-size:0.75rem; font-weight:600; color:#94a3b8; margin-bottom:8px;">{k.label}</p>
           <p style={`font-size:2rem; font-weight:800; color:${k.color};`}>{k.valor}</p>
         </div>
@@ -64,8 +64,8 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
 
       <!-- Estado de cartera -->
-      <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
-        <h2 style="font-size:0.9375rem; font-weight:700; color:#0f172a; margin-bottom:20px;">Estado de Cartera</h2>
+      <div style="background:var(--bg-card); border-radius:16px; border:1px solid var(--border); padding:24px;">
+        <h2 style="font-size:0.9375rem; font-weight:700; color:var(--text-primary); margin-bottom:20px;">Estado de Cartera</h2>
         <div style="display:flex; flex-direction:column; gap:16px;">
           {[
             { label: 'Activos',  count: prestamosActivos,  total: prestamos?.length ?? 1, color: '#2563eb' },
@@ -78,11 +78,11 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
                 <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span style={`width:10px; height:10px; border-radius:50%; background:${item.color}; display:inline-block;`}></span>
-                    <span style="font-size:0.875rem; color:#475569;">{item.label}</span>
+                    <span style="font-size:0.875rem; color:var(--text-secondary);">{item.label}</span>
                   </div>
-                  <span style="font-size:0.875rem; font-weight:700; color:#0f172a;">{pct}% ({item.count})</span>
+                  <span style="font-size:0.875rem; font-weight:700; color:var(--text-primary);">{pct}% ({item.count})</span>
                 </div>
-                <div style="background:#f1f5f9; border-radius:999px; height:6px;">
+                <div style="background:var(--border); border-radius:999px; height:6px;">
                   <div style={`height:6px; border-radius:999px; background:${item.color}; width:${pct}%;`}></div>
                 </div>
               </div>
@@ -90,7 +90,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
           })}
         </div>
 
-        <div style="margin-top:20px; padding-top:20px; border-top:1px solid #f1f5f9; display:flex; gap:16px;">
+        <div style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border); display:flex; gap:16px;">
           <div>
             <p style="font-size:0.75rem; color:#94a3b8;">Tasa de mora</p>
             <p style="font-size:1.125rem; font-weight:700; color:#dc2626;">{tasaMora}%</p>
@@ -103,13 +103,13 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
       </div>
 
       <!-- Últimos pagos -->
-      <div style="background:white; border-radius:16px; border:1px solid #f1f5f9; padding:24px;">
-        <h2 style="font-size:0.9375rem; font-weight:700; color:#0f172a; margin-bottom:20px;">Últimos Pagos</h2>
+      <div style="background:var(--bg-card); border-radius:16px; border:1px solid var(--border); padding:24px;">
+        <h2 style="font-size:0.9375rem; font-weight:700; color:var(--text-primary); margin-bottom:20px;">Últimos Pagos</h2>
         <div style="display:flex; flex-direction:column; gap:2px;">
           {pagos?.slice(0, 8).map(p => (
             <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc;">
               <div>
-                <p style="font-size:0.8125rem; font-weight:600; color:#0f172a;">{new Date(p.fecha_pago).toLocaleDateString('es-DO')}</p>
+                <p style="font-size:0.8125rem; font-weight:600; color:var(--text-primary);">{new Date(p.fecha_pago).toLocaleDateString('es-DO')}</p>
                 <p style="font-size:0.75rem; color:#94a3b8;">{p.metodo_pago}</p>
               </div>
               <span style="font-size:0.875rem; font-weight:700; color:#16a34a;">RD$ {p.monto_pagado.toLocaleString()}</span>
@@ -124,7 +124,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
 
     <!-- Tabla préstamos vencidos -->
     {prestamosVencidos > 0 && (
-      <div style="background:white; border-radius:16px; border:1px solid #fee2e2; padding:24px;">
+      <div style="background:var(--bg-card); border-radius:16px; border:1px solid #fee2e2; padding:24px;">
         <h2 style="font-size:0.9375rem; font-weight:700; color:#dc2626; margin-bottom:16px;">⚠ Préstamos Vencidos</h2>
         <table style="width:100%; border-collapse:collapse;">
           <thead>
@@ -138,10 +138,10 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
           <tbody>
             {prestamos?.filter(p => p.estado === 'vencido').map(p => (
               <tr style="border-bottom:1px solid #fff5f5;">
-                <td style="padding:12px 16px; font-size:0.875rem; font-weight:600; color:#0f172a;">
+                <td style="padding:12px 16px; font-size:0.875rem; font-weight:600; color:var(--text-primary);">
                   {p.clientes ? `${p.clientes.nombre} ${p.clientes.apellido}` : '—'}
                 </td>
-                <td style="padding:12px 16px; font-size:0.875rem; color:#475569;">RD$ {p.monto.toLocaleString()}</td>
+                <td style="padding:12px 16px; font-size:0.875rem; color:var(--text-secondary);">RD$ {p.monto.toLocaleString()}</td>
                 <td style="padding:12px 16px; font-size:0.875rem; font-weight:700; color:#dc2626;">RD$ {p.saldo_restante.toLocaleString()}</td>
                 <td style="padding:12px 16px; font-size:0.875rem; color:#dc2626;">
                   {p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString('es-DO') : '—'}
@@ -158,27 +158,29 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js" data-astro-rerun></script>
   <script data-astro-rerun>
     document.getElementById('btn-pdf')?.addEventListener('click', () => {
-      const btn = document.getElementById('btn-pdf') as HTMLElement;
+      const btn = document.getElementById('btn-pdf');
+      const originalText = btn.textContent;
       btn.textContent = 'Generando...';
       btn.style.opacity = '0.7';
+      btn.disabled = true;
 
-      const empresa = 'Sistema de Préstamos';
+      const empresa = '{config?.nombre_empresa || 'Sistema de Préstamos'}';
       const fecha = new Date().toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' });
 
-      const content = document.querySelector('[style*="flex-direction:column; gap:24px;"] > div:last-child') as HTMLElement;
-      if (!content) return;
+      const mainContent = document.querySelector('main');
+      if (!mainContent) { btn.textContent = originalText; btn.style.opacity = '1'; btn.disabled = false; return; }
 
       const wrapper = document.createElement('div');
-      wrapper.style.padding = '32px';
-      wrapper.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      wrapper.style.padding = '40px';
+      wrapper.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
       wrapper.style.color = '#0f172a';
       wrapper.innerHTML = `
         <div style="text-align:center; margin-bottom:32px; border-bottom:2px solid #2563eb; padding-bottom:16px;">
-          <h1 style="font-size:22px; font-weight:800; color:#0f172a; margin:0;">${empresa}</h1>
-          <p style="font-size:13px; color:#64748b; margin:4px 0 0;">Reporte Financiero — ${fecha}</p>
+          <h1 style="font-size:24px; font-weight:800; color:var(--text-primary); margin:0;">${empresa}</h1>
+          <p style="font-size:13px; color:var(--text-muted); margin:6px 0 0;">Reporte Financiero — ${fecha}</p>
         </div>
       `;
-      wrapper.appendChild(content.cloneNode(true));
+      wrapper.appendChild(mainContent.cloneNode(true));
 
       html2pdf().set({
         margin: [10, 10, 10, 10],
@@ -187,8 +189,9 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       }).from(wrapper).save().then(() => {
-        btn.textContent = 'Descargar PDF';
+        btn.textContent = originalText;
         btn.style.opacity = '1';
+        btn.disabled = false;
       });
     });
   </script>
