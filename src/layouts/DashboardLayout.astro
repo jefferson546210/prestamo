@@ -1,5 +1,6 @@
 ---
 import Sidebar from '../components/layout/Sidebar.jsx';
+import SpeedInsights from '@vercel/speed-insights/astro';
 
 export interface Props {
   title?: string;
@@ -214,5 +215,6 @@ const rol = Astro.cookies.get('user_rol')?.value ?? '';
       });
     }
   </script>
+  <SpeedInsights />
 </body>
 </html>
