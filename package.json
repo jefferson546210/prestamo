@@ -13,10 +13,9 @@
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
+    "@astrojs/vercel": "^10.0.8",
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.107.0",
-    "@astrojs/vercel": "^10.0.8",
-    "@vercel/speed-insights": "^1.2.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "astro": "^6.4.4",
