@@ -1,6 +1,38 @@
 import { supabase } from '../db/supabase';
 import PDFDocument from 'pdfkit';
 
+function drawKpiCard(doc: PDFKit.PDFDocument, x: number, y: number, w: number, label: string, value: string, color: string) {
+  const h = 54;
+  doc.roundedRect(x, y, w, h, 6).fillAndStroke('#f8fafc', '#e2e8f0');
+  doc.fontSize(7).font('Helvetica').fillColor('#94a3b8').text(label, x, y + 8, { width: w, align: 'center' });
+  doc.fontSize(11).font('Helvetica-Bold').fillColor(color).text(value, x, y + 24, { width: w, align: 'center' });
+}
+
+function drawTableHeader(doc: PDFKit.PDFDocument, x: number, y: number, w: number, columns: { label: string; x: number; w: number; align?: string }[]) {
+  const h = 20;
+  doc.roundedRect(x, y, w, h, 4).fill('#f8fafc');
+  doc.fontSize(8).font('Helvetica-Bold').fillColor('#64748b');
+  columns.forEach(col => {
+    doc.text(col.label, col.x, y + 5, { width: col.w, align: (col.align || 'left') as 'left' | 'center' | 'right' });
+  });
+}
+
+function drawTableRow(doc: PDFKit.PDFDocument, x: number, y: number, w: number, columns: { text: string; x: number; w: number; color?: string; bold?: boolean; align?: string }[], isLast: boolean) {
+  columns.forEach(col => {
+    const f = col.bold ? 'Helvetica-Bold' : 'Helvetica';
+    doc.fontSize(8).font(f).fillColor(col.color || '#0f172a');
+    doc.text(col.text, col.x, y + 2, { width: col.w, align: (col.align || 'left') as 'left' | 'center' | 'right' });
+  });
+  if (!isLast) {
+    doc.moveTo(x, y + 16).lineTo(x + w, y + 16).strokeColor('#f1f5f9').stroke();
+  }
+}
+
+function addFooter(doc: PDFKit.PDFDocument, pageNum: number) {
+  doc.fontSize(8).font('Helvetica').fillColor('#94a3b8')
+    .text(`Generado por Sistema de Préstamos — Página ${pageNum}`, 40, doc.page.height - 40, { align: 'center' });
+}
+
 export async function generarPDFReporte(): Promise<Buffer> {
   const [prestamosRes, pagosRes, clientesRes, configRes] = await Promise.all([
     supabase.from('prestamos').select('*, clientes(nombre, apellido)'),
@@ -28,53 +60,51 @@ export async function generarPDFReporte(): Promise<Buffer> {
 
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
   const buffers: Buffer[] = [];
-  doc.on('data', (chunk: Buffer) => buffers.push(chunk));
+  doc.on('data', chunk => buffers.push(chunk));
 
   const fecha = new Date().toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' });
-  const pageWidth = doc.page.width - 80;
+  const ML = 40;
+  const PW = doc.page.width - ML * 2;
+  const cardW = (PW - 30) / 4;
+  const gap = 10;
+  let pageNum = 1;
 
-  // Header
-  doc.fontSize(20).font('Helvetica-Bold').fillColor('#2563eb').text(nombreEmpresa, 40, 40, { align: 'center' });
+  // === HEADER ===
+  doc.fontSize(20).font('Helvetica-Bold').fillColor('#2563eb').text(nombreEmpresa, ML, 40, { align: 'center' });
   doc.fontSize(10).font('Helvetica').fillColor('#64748b').text(`Reporte Financiero — ${fecha}`, { align: 'center' });
-  doc.moveTo(40, 75).lineTo(40 + pageWidth, 75).strokeColor('#2563eb').stroke();
-  doc.moveDown(2);
+  doc.moveTo(ML, 74).lineTo(ML + PW, 74).strokeColor('#2563eb').stroke();
 
-  // KPIs
-  const kpis = [
+  let y = 88;
+
+  // === RESUMEN EJECUTIVO ===
+  doc.fontSize(11).font('Helvetica-Bold').fillColor('#0f172a').text('Resumen Ejecutivo', ML, y);
+  y += 22;
+
+  // Row 1
+  const kpi1 = [
     { label: 'Total Prestado', value: `RD$ ${totalPrestado.toLocaleString()}`, color: '#2563eb' },
     { label: 'Total Cobrado', value: `RD$ ${totalCobrado.toLocaleString()}`, color: '#16a34a' },
     { label: 'Saldo Pendiente', value: `RD$ ${saldoPendiente.toLocaleString()}`, color: '#dc2626' },
     { label: 'Tasa Recuperación', value: `${tasaRecuperacion}%`, color: '#9333ea' },
   ];
-  const kpiW = (pageWidth - 16) / 4;
-  kpis.forEach((k, i) => {
-    const x = 40 + i * (kpiW + 5);
-    doc.roundedRect(x, doc.y, kpiW, 52, 6).fillAndStroke('#f8fafc', '#e2e8f0');
-    doc.fontSize(7).font('Helvetica').fillColor('#94a3b8').text(k.label, x + 8, doc.y - 46, { width: kpiW - 16, align: 'center' });
-    doc.fontSize(12).font('Helvetica-Bold').fillColor(k.color).text(k.value, x + 8, doc.y - 30, { width: kpiW - 16, align: 'center' });
-    doc.y = doc.y - 38;
-  });
-  doc.moveDown(2);
+  kpi1.forEach((k, i) => drawKpiCard(doc, ML + i * (cardW + gap), y, cardW, k.label, k.value, k.color));
+  y += 58;
 
-  // Second row KPIs
-  const kpis2 = [
+  // Row 2
+  const kpi2 = [
     { label: 'Préstamos Activos', value: String(prestamosActivos), color: '#2563eb' },
     { label: 'Préstamos Pagados', value: String(prestamosPagados), color: '#16a34a' },
     { label: 'Préstamos Vencidos', value: String(prestamosVencidos), color: '#dc2626' },
     { label: 'Total Clientes', value: String(totalClientes), color: '#9333ea' },
   ];
-  kpis2.forEach((k, i) => {
-    const x = 40 + i * (kpiW + 5);
-    doc.roundedRect(x, doc.y, kpiW, 52, 6).fillAndStroke('#f8fafc', '#e2e8f0');
-    doc.fontSize(7).font('Helvetica').fillColor('#94a3b8').text(k.label, x + 8, doc.y - 46, { width: kpiW - 16, align: 'center' });
-    doc.fontSize(14).font('Helvetica-Bold').fillColor(k.color).text(k.value, x + 8, doc.y - 32, { width: kpiW - 16, align: 'center' });
-    doc.y = doc.y - 38;
-  });
-  doc.moveDown(2);
+  kpi2.forEach((k, i) => drawKpiCard(doc, ML + i * (cardW + gap), y, cardW, k.label, k.value, k.color));
+  y += 60;
 
-  // Portfolio state
-  doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Estado de Cartera');
-  doc.moveDown(0.5);
+  // === ESTADO DE CARTERA ===
+  if (y > 650) { doc.addPage(); pageNum++; y = 40; }
+  doc.fontSize(11).font('Helvetica-Bold').fillColor('#0f172a').text('Estado de Cartera', ML, y);
+  y += 22;
+
   const estados = [
     { label: 'Activos', count: prestamosActivos, color: '#2563eb' },
     { label: 'Pagados', count: prestamosPagados, color: '#16a34a' },
@@ -82,76 +112,86 @@ export async function generarPDFReporte(): Promise<Buffer> {
   ];
   estados.forEach(e => {
     const pct = totalPrestamos > 0 ? Math.round((e.count / totalPrestamos) * 100) : 0;
-    doc.fontSize(9).font('Helvetica').fillColor('#475569').text(`${e.label}  ${pct}% (${e.count})`, 40, doc.y, { continued: true });
-    doc.fontSize(8).font('Helvetica').fillColor('#94a3b8').text(`     Tasa de mora: ${tasaMora}%     Recuperación: ${tasaRecuperacion}%`, 40, doc.y - 10, { align: 'right', width: pageWidth });
-    doc.roundedRect(40, doc.y + 2, pageWidth, 8, 4).fill('#f1f5f9');
-    doc.roundedRect(40, doc.y + 2, pageWidth * (pct / 100), 8, 4).fill(e.color);
-    doc.moveDown(1.5);
+    doc.fontSize(9).font('Helvetica').fillColor('#475569').text(`${e.label}  ${pct}% (${e.count})`, ML, y);
+    y += 14;
+    doc.roundedRect(ML, y, PW, 8, 4).fill('#f1f5f9');
+    if (pct > 0) doc.roundedRect(ML, y, PW * (pct / 100), 8, 4).fill(e.color);
+    y += 14;
   });
-  doc.moveDown(1);
 
-  // Recent payments
+  // Summary line (once, after all bars)
+  doc.fontSize(9).font('Helvetica').fillColor('#64748b').text(`Tasa de mora: ${tasaMora}%     |     Tasa de recuperación: ${tasaRecuperacion}%`, ML, y);
+  y += 22;
+
+  // === ÚLTIMOS PAGOS ===
   if (ultimosPagos.length > 0) {
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a').text('Últimos Pagos');
-    doc.moveDown(0.5);
-    // Table header
-    doc.roundedRect(40, doc.y, pageWidth, 18, 4).fill('#f8fafc');
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('#64748b');
-    doc.text('Fecha', 48, doc.y - 14, { width: 100 });
-    doc.text('Método', 148, doc.y - 14, { width: 100 });
-    doc.text('Monto', pageWidth - 40, doc.y - 14, { width: 80, align: 'right' });
-    doc.moveDown(0.2);
+    if (y > 650) { doc.addPage(); pageNum++; y = 40; }
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#0f172a').text('Últimos Pagos', ML, y);
+    y += 22;
+
+    const cW = Math.floor(PW / 3);
+    const colFecha = ML;
+    const colMetodo = ML + cW;
+    const colMonto = ML + cW * 2;
+    drawTableHeader(doc, ML, y, PW, [
+      { label: 'Fecha', x: colFecha, w: cW - 5 },
+      { label: 'Método', x: colMetodo, w: cW - 5 },
+      { label: 'Monto', x: colMonto, w: cW - 5, align: 'right' },
+    ]);
+    y += 22;
+
     ultimosPagos.forEach((p, i) => {
-      const y = doc.y;
-      doc.fontSize(8).font('Helvetica').fillColor('#0f172a');
-      doc.text(new Date(p.fecha_pago).toLocaleDateString('es-DO'), 48, y, { width: 100 });
-      doc.fillColor('#64748b').text(p.metodo_pago || '—', 148, y, { width: 100 });
-      doc.fillColor('#16a34a').font('Helvetica-Bold').text(`RD$ ${p.monto_pagado.toLocaleString()}`, pageWidth - 40, y, { width: 80, align: 'right' });
-      if (i < ultimosPagos.length - 1) {
-        doc.moveTo(40, doc.y + 8).lineTo(40 + pageWidth, doc.y + 8).strokeColor('#f1f5f9').stroke();
-      }
-      doc.moveDown(0.3);
+      if (y > 730) { doc.addPage(); pageNum++; y = 40; }
+      const isLast = i === ultimosPagos.length - 1;
+      drawTableRow(doc, ML, y, PW, [
+        { text: new Date(p.fecha_pago).toLocaleDateString('es-DO'), x: colFecha, w: cW - 5 },
+        { text: p.metodo_pago || '—', x: colMetodo, w: cW - 5, color: '#64748b' },
+        { text: `RD$ ${p.monto_pagado.toLocaleString()}`, x: colMonto, w: cW - 5, color: '#16a34a', bold: true, align: 'right' },
+      ], isLast);
+      y += 18;
     });
+    y += 10;
   }
-  doc.moveDown(1);
 
-  // Overdue loans
+  // === PRÉSTAMOS VENCIDOS ===
   if (prestamosVencidosLista.length > 0) {
-    doc.fontSize(12).font('Helvetica-Bold').fillColor('#dc2626').text('Préstamos Vencidos');
-    doc.moveDown(0.5);
-    doc.roundedRect(40, doc.y, pageWidth, 18, 4).fill('#fff5f5');
-    doc.fontSize(8).font('Helvetica-Bold').fillColor('#64748b');
-    doc.text('Cliente', 48, doc.y - 14, { width: 150 });
-    doc.text('Monto', 200, doc.y - 14, { width: 80 });
-    doc.text('Saldo', 280, doc.y - 14, { width: 80 });
-    doc.text('Vencido', pageWidth - 40, doc.y - 14, { width: 80, align: 'right' });
-    doc.moveDown(0.2);
+    if (y > 600) { doc.addPage(); pageNum++; y = 40; }
+    doc.fontSize(11).font('Helvetica-Bold').fillColor('#dc2626').text('Préstamos Vencidos', ML, y);
+    y += 22;
+
+    const cW2 = Math.floor(PW / 4);
+    const colCli = ML;
+    const colMon = ML + cW2;
+    const colSal = ML + cW2 * 2;
+    const colVen = ML + cW2 * 3;
+    drawTableHeader(doc, ML, y, PW, [
+      { label: 'Cliente', x: colCli, w: cW2 - 5 },
+      { label: 'Monto', x: colMon, w: cW2 - 5 },
+      { label: 'Saldo', x: colSal, w: cW2 - 5 },
+      { label: 'Vencido', x: colVen, w: cW2 - 5, align: 'right' },
+    ]);
+    y += 22;
+
     prestamosVencidosLista.forEach((p, i) => {
-      const y = doc.y;
+      if (y > 730) { doc.addPage(); pageNum++; y = 40; }
+      const isLast = i === prestamosVencidosLista.length - 1;
       const cliente = p.clientes ? `${p.clientes.nombre} ${p.clientes.apellido}` : '—';
-      doc.fontSize(8).font('Helvetica-Bold').fillColor('#0f172a').text(cliente, 48, y, { width: 150 });
-      doc.font('Helvetica').fillColor('#475569').text(`RD$ ${p.monto.toLocaleString()}`, 200, y, { width: 80 });
-      doc.font('Helvetica-Bold').fillColor('#dc2626').text(`RD$ ${p.saldo_restante.toLocaleString()}`, 280, y, { width: 80 });
-      doc.font('Helvetica').fillColor('#dc2626').text(
-        p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString('es-DO') : '—',
-        pageWidth - 40, y, { width: 80, align: 'right' }
-      );
-      if (i < prestamosVencidosLista.length - 1) {
-        doc.moveTo(40, doc.y + 8).lineTo(40 + pageWidth, doc.y + 8).strokeColor('#f1f5f9').stroke();
-      }
-      doc.moveDown(0.3);
+      drawTableRow(doc, ML, y, PW, [
+        { text: cliente, x: colCli, w: cW2 - 5, bold: true },
+        { text: `RD$ ${p.monto.toLocaleString()}`, x: colMon, w: cW2 - 5, color: '#475569' },
+        { text: `RD$ ${p.saldo_restante.toLocaleString()}`, x: colSal, w: cW2 - 5, color: '#dc2626', bold: true },
+        { text: p.fecha_fin ? new Date(p.fecha_fin).toLocaleDateString('es-DO') : '—', x: colVen, w: cW2 - 5, color: '#dc2626', align: 'right' },
+      ], isLast);
+      y += 18;
     });
   }
 
-  // Footer
-  const totalP = doc.y;
-  if (totalP > 650) { doc.addPage(); }
-  doc.fontSize(8).font('Helvetica').fillColor('#94a3b8')
-    .text('Generado por Sistema de Préstamos', 40, doc.page.height - 40, { align: 'center' });
+  // === FOOTER ===
+  addFooter(doc, pageNum);
 
   doc.end();
 
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     doc.on('end', () => resolve(Buffer.concat(buffers)));
   });
 }
