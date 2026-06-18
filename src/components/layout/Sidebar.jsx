@@ -132,9 +132,10 @@ export default function Sidebar() {
           </div>
           <button
             onClick={toggleDark}
-            style={{ width: '36px', height: '20px', borderRadius: '999px', border: 'none', cursor: 'pointer', position: 'relative', background: darkMode ? '#16a34a' : '#cbd5e1', transition: 'background 0.2s' }}
+            aria-label="Alternar modo oscuro"
+            style={{ width: '38px', height: '22px', borderRadius: '999px', border: '0', cursor: 'pointer', position: 'relative', background: darkMode ? '#16a34a' : '#cbd5e1', transition: 'background 0.2s', padding: '0', outline: 'none' }}
           >
-            <span style={{ position: 'absolute', top: '2px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transform: darkMode ? 'translateX(18px)' : 'translateX(2px)', transition: 'transform 0.2s' }} />
+            <span style={{ position: 'absolute', top: '3px', width: '16px', height: '16px', background: 'white', borderRadius: '50%', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transform: darkMode ? 'translateX(19px)' : 'translateX(3px)', transition: 'transform 0.2s' }} />
           </button>
         </div>
       </nav>
