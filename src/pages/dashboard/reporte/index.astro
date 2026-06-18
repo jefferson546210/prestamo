@@ -24,7 +24,7 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
   <div style="display:flex; flex-direction:column; gap:24px;">
 
     <div style="display:flex; justify-content:flex-end;">
-      <button id="btn-pdf" data-empresa="{config?.nombre_empresa || 'Sistema de Préstamos'}" style="display:flex; align-items:center; gap:8px; background:#2563eb; color:white; padding:10px 20px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
+      <button id="btn-pdf" style="display:flex; align-items:center; gap:8px; background:#2563eb; color:white; padding:10px 20px; border-radius:10px; font-size:0.875rem; font-weight:600; border:none; cursor:pointer;">
         <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Exportar PDF
       </button>
@@ -155,47 +155,31 @@ const tasaMora = (prestamos?.length ?? 0) > 0 ? ((prestamosVencidos / (prestamos
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.3/dist/html2pdf.bundle.min.js" data-astro-rerun></script>
   <script data-astro-rerun>
-    document.getElementById('btn-pdf')?.addEventListener('click', () => {
+    document.getElementById('btn-pdf')?.addEventListener('click', async () => {
       const btn = document.getElementById('btn-pdf');
       const originalText = btn.textContent;
       btn.textContent = 'Generando...';
       btn.style.opacity = '0.7';
       btn.disabled = true;
 
-      const empresa = btn.dataset.empresa || 'Sistema de Préstamos';
-      const fecha = new Date().toLocaleDateString('es-DO', { year: 'numeric', month: 'long', day: 'numeric' });
+      try {
+        const res = await fetch('/api/reporte/pdf');
+        if (!res.ok) throw new Error('Error al generar PDF');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'reporte-financiero.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch {
+        alert('Error al generar el PDF. Intente de nuevo.');
+      }
 
-      const mainContent = document.querySelector('main');
-      if (!mainContent) { btn.textContent = originalText; btn.style.opacity = '1'; btn.disabled = false; return; }
-
-      const clone = mainContent.cloneNode(true);
-      (clone as HTMLElement).style.padding = '0';
-
-      const wrapper = document.createElement('div');
-      wrapper.style.padding = '40px';
-      wrapper.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
-      wrapper.style.color = '#0f172a';
-      wrapper.innerHTML = `
-        <div style="text-align:center; margin-bottom:32px; border-bottom:2px solid #2563eb; padding-bottom:16px;">
-          <h1 style="font-size:24px; font-weight:800; margin:0;">${empresa}</h1>
-          <p style="font-size:13px; color:#64748b; margin:6px 0 0;">Reporte Financiero — ${fecha}</p>
-        </div>
-      `;
-      wrapper.appendChild(clone);
-
-      html2pdf().set({
-        margin: [10, 10, 10, 10],
-        filename: 'reporte-financiero.pdf',
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      }).from(wrapper).save().then(() => {
-        btn.textContent = originalText;
-        btn.style.opacity = '1';
-        btn.disabled = false;
-      });
+      btn.textContent = originalText;
+      btn.style.opacity = '1';
+      btn.disabled = false;
     });
   </script>
 </DashboardLayout>
